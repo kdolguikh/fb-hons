@@ -1,18 +1,61 @@
-%%%% when we get towards the end of the experiment and people only make 1
-%%%% 2, or 3 fixations during feedback, what do they look at??
 
-function relevance = shortFB(experiment, summaryTable, fixlvl)      
+function relevance = shortFB(experiment, summaryTable, fixlvl)  
+
+ %  Author: Kat 
+    %  Date Created: 
+    %  Last Edit: 
+     
+    %  Cognitive Science Lab, Simon Fraser University 
+    %  Originally Created For: feedback
+      
+    %  Reviewed: 
+    %  Verified: 
+
+    
+    %  PURPOSE: investigate what people look at whne feedback phases get so
+    %  short that they contain only 1, 2 or 3 fixations. 
  
+    
+    %  INPUT: 
+    
+%         experiment: experiment name
+
+%         summaryTable: binned data table (loaded from directory in master.m)
+
+%         fixlvl: fixation level table for relevant experiment.
+
+    
+    %  OUTPUT: 3x1 matrix of fixations counts. relevance(1) = relevant
+    %  stimulus features, relevance(2) = irrelevant stimulus features,
+    %  relevance(3) = feedback buttons.
+
+    
+    %  Additional Scripts Used: []
+    
+    
+    %  Additional Comments: this is the quarantine version aka I had to
+    %  load a .mat version of the fixation level table. normally we would
+    %  call from SQL directly. likely will change back to this once we can
+    %  get back in the lab.
+    
+ 
+    % identify trials with fewer than 4 feedback phase fixations. fc4
+    % stands for fixation count: phase 4
     shortTrials = summaryTable(summaryTable.fc4 < 4, :);   
     subjects = unique(shortTrials.Subject);
     
+    % fixations will be a list of all the fixations in the experiment
+    % occurring during short feedback phases
     fixations = [];
+    
+    % loop through each subject
     for i = 1:length(subjects)
         
         % this gives us trial ID of all trials with a short enough fb
-        % phase, for the current subject
+        % phase for the current subject
         trials = shortTrials.Trial(shortTrials.Subject == subjects(i));
         
+        % this gives us all fixations for the current subject
         subjectFixations = fixlvl(fixlvl.Subject == subjects(i), :);
         
         % this gives us all p4 fixations for the current subject
@@ -27,18 +70,24 @@ function relevance = shortFB(experiment, summaryTable, fixlvl)
     
     end
     
-    % funcRelevance = 1, 2: relevant features; 3: irrelevant feature; > 3:
-    % feedback button; 0: something else aka useless
+    % funcRelevance definitions:
+        % 1, 2: relevant features
+        % 3: irrelevant feature 
+        % > 3: feedback button 
+        % 0: something else aka useless
+        
     relevant = sum(fixations == 1 | fixations == 2);
     irrelevant = sum(fixations == 3);
     button = sum(fixations > 3);
    
-    
     relevance = [relevant, irrelevant, button];
     
     
+    % quick plot of our results
     figure()
     bar(relevance, 0.95);
+    
+    % (commented out the title for the final plots used in my paper)
     
     % title('location of fixations in very short feedback phases')
     ylabel('number of fixations')
@@ -46,6 +95,7 @@ function relevance = shortFB(experiment, summaryTable, fixlvl)
     xticks([1 2 3])
     xticklabels({'Rel. feature', 'Irrel. feature', 'FB'})
     
+    % saving plot where I want it
     fnPlot = strcat('/Users/16132/Documents/lab/KAT/', experiment, '/plots/short.png');
     saveas(gca, char(fnPlot));
     close all

@@ -1,9 +1,55 @@
-                
-function [first, second, third] = postError(experiment, subTable, phase, cps)
+%% fix this to accommodate self=paced v fixed-time
 
-%     % load data
-      load(strcat('Users/16132/Documents/lab/KAT/', experiment, '/explvl.mat'));
-      load(strcat('Users/16132/Documents/lab/KAT/', experiment, '/triallvl.mat'));
+function [first, second, third] = postError(experiment, subTable, phase, cps, fixed)
+
+ %  Author: Kat 
+    %  Date Created: 
+    %  Last Edit: 
+     
+    %  Cognitive Science Lab, Simon Fraser University 
+    %  Originally Created For: feedback
+      
+    %  Reviewed: 
+    %  Verified: 
+
+    
+    %  PURPOSE: investigate how errors change attention. two versions of
+    %  analysis here: p2 and p4. 
+        % p2: compares attention on the error trial to three kinds of
+        % 'next' trials: the trial immediately following, the next trial of
+        % the same category, the next trial of the same stimulus
+        % p4: compares attention during the feedback phase on all error
+        % trials to all non-error trials
+ 
+    
+    %  INPUT: 
+    
+%         experiment: experiment name
+
+%         subTable: binned data table (loaded from directory in master.m)
+
+%         phase: phase of interest (p2 or p4)
+
+%         cps: vector of CP for each subject in the curren experiment
+
+%         fixed: 1 if experiment is fixed time (feedback2, feedback3), 0 if
+%         self-paced (asset, sato, sshrcif)
+
+    
+    %  OUTPUT: up to three t-tests comparing error to non-error trials.
+
+    
+    %  Additional Scripts Used: 
+    
+    %  Additional Comments: this is the quarantine version aka I had to
+    %  load .mat versions of data tables.. normally we would call
+    %  from SQL directly. likely will change back to this once we can
+    %  get back in the lab.
+    
+
+     % load data (normally would use SQL directly for this.)
+     load(strcat('Users/16132/Documents/lab/KAT/', experiment, '/explvl.mat'));
+     load(strcat('Users/16132/Documents/lab/KAT/', experiment, '/triallvl.mat'));
 
       
     % filter out people we are not interested in i.e. gaze droppers and
@@ -14,64 +60,75 @@ function [first, second, third] = postError(experiment, subTable, phase, cps)
  
     badSubs = explvl.Subject(cut);
 
-    for i = 1:length(badSubs) % rip this has gotta be inefficient, oh well...
+    for i = 1:length(badSubs) % inefficient, I know -.-
          cutMe = badSubs(i);
          triallvl(triallvl.Subject == cutMe, :) = [];
     end
 
     
     subjects = unique(subTable.Subject);
+    
 
+    %% first, the p4 version of the analysis
     if strcmp(phase, "p4")
-        
-        %% these two measures get uncommented for self-paced exps.
-%         correctrt = [];
-%         errorrt = [];
         
         correctirrel = [];
         errorirrel = [];
         
-        % comment the rest of these initialized variables out for
-        % self-paced.
-        correctOne = [];
-        errorOne = [];
-        
-        correctNine = [];
-        errorNine = [];
-        
+        if fixed
+            % for fb2, fb3 we want condition-specific measures 
+            correctOne = [];
+            errorOne = [];
+
+            correctNine = [];
+            errorNine = [];
+        else
+            % for self-paced experiments, we also want feedback phase
+            % duration. this is constant in fixed-time exp.s, so we don't
+            % bother with it
+            correctrt = [];
+            errorrt = [];
+        end
+
         for i = 1:length(subjects)
             cp = cps(i);
             
             current = subTable(subTable.Subject == subjects(i), :);
             
-            % only learning trials pls
+            % since there are very few error trials later on in the
+            % experiment, we limit this analysis to early errors and early
+            % correct responses. we call these learning trials as they
+            % occur before CP is reached. this will hopefully limit any
+            % effect of time in the experiment
             current = current(current.Trial < cp, :);
             correctTrials = current(current.Accuracy == 1, :);
             errorTrials = current(current.Accuracy == 0, :);
             
-            %% same as above, reintroduce for self-paced
-%             correctrt = [correctrt; nanmean(correctTrials.rt4)];
-%             errorrt = [errorrt; nanmean(errorTrials.rt4)];
             
-            correctirrel = [correctirrel; nanmean(correctTrials.irrelp4)];
-            errorirrel = [errorirrel; nanmean(errorTrials.irrelp4)];
-            
-            % comment out this next line and the entire if/else for
-            % self-paced.
-            cond = subTable.Condition(subTable.Subject == subjects(i));
-            if cond(1) == 9000
-                correctNine = [correctNine; nanmean(correctTrials.irrelp4)];
-                errorNine = [errorNine; nanmean(errorTrials.irrelp4)];
+            % we are looking at time on irrelevant features during
+            % feedback. for fb2, fb3 this is divided by condition. for
+            % other experiments it is not.
+            if fixed
+                cond = subTable.Condition(subTable.Subject == subjects(i));
+                if cond(1) == 9000
+                    correctNine = [correctNine; nanmean(correctTrials.irrelp4)];
+                    errorNine = [errorNine; nanmean(errorTrials.irrelp4)];
+                else
+                    correctOne = [correctOne; nanmean(correctTrials.irrelp4)];
+                    errorOne = [errorOne; nanmean(errorTrials.irrelp4)];
+                end
             else
-                correctOne = [correctOne; nanmean(correctTrials.irrelp4)];
-                errorOne = [errorOne; nanmean(errorTrials.irrelp4)];
+                correctirrel = [correctirrel; nanmean(correctTrials.irrelp4)];
+                errorirrel = [errorirrel; nanmean(errorTrials.irrelp4)];
             end
+
+
         end
         
-        %% reintroduced in self-paced
-%         [h, p , ci, stats] = ttest(correctrt, errorrt)
-%         first = [h, p];
 
+
+        % for all exps, compare time on irrelevant features on correct and
+        % error trials
         first = [];
         disp('everyone')
         [h, p, ci, stats] = ttest(correctirrel, errorirrel)
@@ -79,37 +136,52 @@ function [first, second, third] = postError(experiment, subTable, phase, cps)
         
         third = [];
         
-        %% now by condition... comment these two tests out for self paced)
+        % now, by condition
+        if fixed
         
-        % one sec
-        disp('one sec')
-        [h, p, ci, stats] = ttest(correctOne, errorOne)
+            % one sec
+            disp('one sec')
+            [h, p, ci, stats] = ttest(correctOne, errorOne)
+
+            % nine sec
+            disp('nine sec')
+            [h, p, ci, stats] = ttest(correctNine, errorNine)
+        else
+            % in self-paced, compare feedback phase duration on correct and error trials
+            [h, p , ci, stats] = ttest(correctrt, errorrt)
+            first = [h, p];
+        end
         
-        % nine sec
-        disp('nine sec')
-        [h, p, ci, stats] = ttest(correctNine, errorNine)
         
+    %% now p2 version of analysis    
+    else        
+               
+        % error suffix: the error trial
+        % trial suffix: following trial
+        % cat suffix: next same category
+        % stim suffix: next same stimulus
         
-        
-    else        % now p2 things 
-                
         rt2error = [];
         rt2trial = [];
         rt2cat = [];
         rt2stim = [];
         
-        % comment these next two chunks out for self paced
-        errorNine = [];
-        trialNine = [];
-        catNine = [];
-        stimNine = [];
+        if fixed    % in fixed-time feedback, divide by condition
+            errorNine = [];
+            trialNine = [];
+            catNine = [];
+            stimNine = [];
+
+            errorOne = [];
+            trialOne = [];
+            catOne = [];
+            stimOne = [];
+        else
+            % for self-paced experiments, we also look at fb duration on
+            % error trials
+            rt4error = [];
+        end
         
-        errorOne = [];
-        trialOne = [];
-        catOne = [];
-        stimOne = []; 
-                
-        %rt4error = [];     % include this line in self-paced
         
         for i = 1:length(subjects)
 
@@ -121,8 +193,9 @@ function [first, second, third] = postError(experiment, subTable, phase, cps)
             cond = subTable.Condition(subTable.Subject == current);
             
             % for each trial, identify the next ones. if there is NO next
-            % one (of the furthest possible i.w next same STIM), cut this
-            % error trial. 
+            % one (of the furthest possible i.e. next same STIM), cut this
+            % error trial. at the end we will have all error trials that
+            % have all 3 kinds of next trial.
             for j = 1:length(errors)
                 currentTrial = errors(j);
 
@@ -158,29 +231,32 @@ function [first, second, third] = postError(experiment, subTable, phase, cps)
                 nextTrial = subTable.rt2(subTable.Subject == current & subTable.Trial == currentTrial + 1);
                 rt2trial = [rt2trial; nextTrial];
                 
-                % remove this if/else in self-paced
-                if cond(1) == 9000
-                    trialNine = [trialNine; nextTrial];
-                    catNine = [catNine; nextSameCat];
-                    stimNine = [stimNine; nextSameStim];
-                else
-                    trialOne = [trialOne; nextTrial];
-                    catOne = [catOne; nextSameCat];
-                    stimOne = [stimOne; nextSameStim];
+                if fixed
+                    % for fixed-time experiments, divide by condition
+                    if cond(1) == 9000
+                        trialNine = [trialNine; nextTrial];
+                        catNine = [catNine; nextSameCat];
+                        stimNine = [stimNine; nextSameStim];
+                    else
+                        trialOne = [trialOne; nextTrial];
+                        catOne = [catOne; nextSameCat];
+                        stimOne = [stimOne; nextSameStim];
+                    end
                 end
                                     
             end
             index = errorTrials.Subject == current;
-            
-            %% add rt4 back in for self-paced
-            %rt4error = [rt4error; errorTrials.rt4(index)];
+
             rt2error = [rt2error; errorTrials.rt2(index)];
             
-            % comment this if/else for self-paced
-            if cond(1) == 9000
-                errorNine = [errorNine; errorTrials.rt2(index)];
+            if fixed
+                if cond(1) == 9000
+                    errorNine = [errorNine; errorTrials.rt2(index)];
+                else
+                    errorOne = [errorOne; errorTrials.rt2(index)];
+                end
             else
-                errorOne = [errorOne; errorTrials.rt2(index)];
+                rt4error = [rt4error; errorTrials.rt4(index)];
             end
 
         end
@@ -199,46 +275,56 @@ function [first, second, third] = postError(experiment, subTable, phase, cps)
         third = [h, p];
         
         
-        % for fb2, fb3 (comment for self-paced)
-        disp('NOW ONE SEC ONLY')
-        disp('next trial following error')
-        [h, p, ci, stats] = ttest(trialOne, errorOne, 'Tail', 'right')
-        
-        disp('next trial with same category')
-        [h, p, ci, stats] = ttest(catOne, errorOne, 'Tail', 'right')
-        
-        disp('next trial with same stimulus')
-        [h, p, ci, stats] = ttest(stimOne, errorOne, 'Tail', 'right')
-        
-        
-        
-        disp('NOW NINE SEC ONLY')
-        disp('next trial following error')
-        [h, p, ci, stats] = ttest(trialNine, errorNine, 'Tail', 'right')
-        
-        disp('next trial with same category')
-        [h, p, ci, stats] = ttest(catNine, errorNine, 'Tail', 'right')
-        
-        disp('next trial with same stimulus')
-        [h, p, ci, stats] = ttest(stimNine, errorNine, 'Tail', 'right')
-        
-        
-        disp('COMPARING CONDITIONS')
-        
-        trialDiffOne = trialOne - errorOne;
-        trialDiffNine = trialNine - errorNine;
-        disp('next trial following error')
-        [h, p, ci, stats] = ttest2(trialDiffOne, trialDiffNine)
-        
-        catDiffOne = catOne - errorOne;
-        catDiffNine = catNine - errorNine;
-        disp('next trial with same category')
-        [h, p, ci, stats] = ttest2(catDiffOne, catDiffNine)
-        
-        stimDiffOne = stimOne - errorOne;
-        stimDiffNine = stimNine - errorNine;
-        disp('next trial with same stimulus')
-        [h, p, ci, stats] = ttest2(stimDiffOne, stimDiffNine)
+        % for fixed time experiments, look by condition and across
+        % conditions as well
+        if fixed
+            
+            % one sec
+            disp('NOW ONE SEC ONLY')
+            disp('next trial following error')
+            [h, p, ci, stats] = ttest(trialOne, errorOne, 'Tail', 'right')
+
+            disp('next trial with same category')
+            [h, p, ci, stats] = ttest(catOne, errorOne, 'Tail', 'right')
+
+            disp('next trial with same stimulus')
+            [h, p, ci, stats] = ttest(stimOne, errorOne, 'Tail', 'right')
+
+
+            % nine sec
+            disp('NOW NINE SEC ONLY')
+            disp('next trial following error')
+            [h, p, ci, stats] = ttest(trialNine, errorNine, 'Tail', 'right')
+
+            disp('next trial with same category')
+            [h, p, ci, stats] = ttest(catNine, errorNine, 'Tail', 'right')
+
+            disp('next trial with same stimulus')
+            [h, p, ci, stats] = ttest(stimNine, errorNine, 'Tail', 'right')
+
+
+            % across conditions
+            disp('COMPARING CONDITIONS')
+
+            % to compare across conditions, we take the difference between
+            % error trial values and next trial values for each error
+            % trial. we then compare the distributions of these difference
+            % values using independent samples t-tests.
+            trialDiffOne = trialOne - errorOne;
+            trialDiffNine = trialNine - errorNine;
+            disp('next trial following error')
+            [h, p, ci, stats] = ttest2(trialDiffOne, trialDiffNine)
+
+            catDiffOne = catOne - errorOne;
+            catDiffNine = catNine - errorNine;
+            disp('next trial with same category')
+            [h, p, ci, stats] = ttest2(catDiffOne, catDiffNine)
+
+            stimDiffOne = stimOne - errorOne;
+            stimDiffNine = stimNine - errorNine;
+            disp('next trial with same stimulus')
+            [h, p, ci, stats] = ttest2(stimDiffOne, stimDiffNine)
+        end
                    
     end
 

@@ -1,12 +1,68 @@
-
-
+ 
 function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
 
+
+    %  Author: Kat 
+    %  Date Created: 
+    %  Last Edit: 
+     
+    %  Cognitive Science Lab, Simon Fraser University 
+    %  Originally Created For: feedback
+      
+    %  Reviewed: 
+    %  Verified: 
+
+    
+    %  PURPOSE: 
+        % - create summary table of mean values for basic measures (accuracy, fixation duration
+        % during feedback, response time (p2 duration), gaze optimization
+        % during p2, time on irrelevant features (both p2 and p4), feedback phase duration)
+        % - plot basic measures
+        % - test for change with learning (first bin vs learned bin t-test)
+ 
+    
+    %  INPUT: 
+    
+%         experiment: experiment name
+
+%         fixed: 1 if experiment is fixed time (feedback2, feedback3), 0 if
+%         self-paced (asset, sato, sshrcif)
+
+%         sumTable: binned data table (loaded from directory in master.m)
+
+%         targetTrial: a vector of trial (CP + 11) for all subjects in the
+%         current experiment. this is calculated in master.m (because it is
+%         used in a number of measures, so I wanted to avoid recalculating
+%         it a million times). I use CP + 11 to ensure (at least) around
+%         half of the subject's CP trials are included in the learned bin.
+%         CP is 24 correct trials in a row. the value listed as a subject's
+%         CP is the FIRST of these 24 trials. so a subject with CP 35 (for
+%         example) will have correctly categorized trials 35-58. target
+%         trial for this subject would be 46.
+
+%         limits: the upper trial in each bin (again, calculated in master.m to avoid redoing it in every script.)
+
+
+    
+    %  OUTPUT: binned is a table containing mean values per bin for all measures 
+
+    
+    %  Additional Scripts Used: 
+        % gramm: matlab plotting library (makes pretty graphs). 
+        % source: https://github.com/piermorel/gramm
+    
+    
+    %  Additional Comments: 
+    
+
+    % this is where kat wanted the plots saved on her computer.
     direc = strcat('/Users/16132/Documents/lab/KAT/', experiment, '/plots/');
+    
     
     % calculate statistics by bin
     binned = grpstats(sumTable, {'Subject', 'Condition', 'TrialBin'}, {'mean', 'predci'}, 'datavars', {'Accuracy', 'rt2', 'dur2', 'fc2', 'irrelp2', 'rt4', 'dur4', 'fc4', 'irrelp4', 'Optimization', 'p4features', 'p4button'});
     subjects = unique(binned.Subject);
+    
     
 %% plots using gramm
 % accuracy/learning curve
@@ -17,6 +73,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     g.axe_property('YLim', [0 1]);
     g.axe_property('XLim', [1 15]);
     
+    % removed titles for the final plots used in my paper.
     %title = strcat('Learning curve:  ', experiment);
     %g.set_title(title);
     g.set_names('x','Trial Bin','y','Mean accuracy', 'color', 'Condition');
@@ -24,6 +81,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     figure()
     g.draw();
     
+    % save plot
     fnPlot = strcat(direc, 'accuracy.png');
     saveas(gca, char(fnPlot));
     close all
@@ -100,8 +158,8 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     g.axe_property('YLim', [0 800]);        
     g.axe_property('XLim', [1 15]);
     
-    title = strcat('Time on irrelevant features pre-response:  ', experiment);
-    g.set_title(title);
+%     title = strcat('Time on irrelevant features pre-response:  ', experiment);
+%     g.set_title(title);
     g.set_names('x','Trial Bin','y','Mean time (per trial)', 'color', 'Condition');
 
     figure()
@@ -120,8 +178,8 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     g.axe_property('YLim', [0 800]);       
     g.axe_property('XLim', [1 15]);
     
-    title = strcat('Time on irrelevant features during feedback:  ', experiment);
-    g.set_title(title);
+%     title = strcat('Time on irrelevant features during feedback:  ', experiment);
+%     g.set_title(title);
     g.set_names('x','Trial Bin','y','Mean time (per trial)', 'color', 'Condition');
 
     figure()
@@ -134,6 +192,8 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     
     %% t-tests
     
+    % initialize variables I will use..."first" prefix is for bin 1, "cp"
+    % prefix is for learned bin
     firstdur4 = [];
     cpdur4 = [];
     
@@ -144,15 +204,21 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     cpopt2 = [];
     
     
-    % OK, I am taking the distribution of mean values for the first bin vs
+    % I am taking the distribution of mean values for the first bin vs
     % the distribution of mean values for the CP bin. one value in each per
     % subject. 
     
+    
+    % targetTrial has one value per subject. so, here we loop through each
+    % subject in the experiment.
     for i = 1:length(targetTrial)
         current = subjects(i);
         target = targetTrial(i);
+        
+        % this gives us the bin containing the target trial, since limits
+        % gives us upper limits for each bin.
         ind = find(limits > target);
-        if isempty(ind)
+        if isempty(ind) % this means we need the last bin
             relevantBin = 15;
         else
             relevantBin = ind(1);
@@ -169,7 +235,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
         firstopt = binned.mean_Optimization(binned.Subject == current & binned.TrialBin == 1);
         targopt = binned.mean_Optimization(binned.Subject == current & binned.TrialBin == relevantBin);
         
-        
+        % append 
         firstdur4 = [firstdur4; firstdur];
         cpdur4 = [cpdur4; targdur];
         firstrt2 = [firstrt2; firstrt];
@@ -179,6 +245,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
         
     end
     
+    % run and display t-tests for each measure
     disp('fix duration p4')
     [h, p, ci, stats] = ttest(firstdur4, cpdur4)
     
@@ -191,55 +258,66 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     [h, p, ci, stats] = ttest(firstopt2, cpopt2)
     
     
-    %% now by condition (for fb2/fb3. comment this section out for self-paced exps)
-    disp('now BY CONDITION...these are independent samples')
+       
+    if fixed 
+    %% now by condition (for fb2/fb3)
     
-    ninesec = sumTable(sumTable.Condition == 9000, :);
-    onesec = sumTable(sumTable.Condition == 1000, :);
-    
-    % cp
-    cpNine = [];
-    subjects = unique(ninesec.Subject);
-    for i = 1:length(subjects)
-       filtered = ninesec.CP(ninesec.Subject == subjects(i));
-       cpNine = [cpNine; filtered(1)];
-    end
-    
-    cpOne = [];
-    subjects = unique(onesec.Subject);
-    for i = 1:length(subjects)
-       filtered = onesec.CP(onesec.Subject == subjects(i));
-       cpOne = [cpOne; filtered(1)];
-    end
-    
-    disp('cp')
-    [h, p, ci, stats] = ttest2(cpOne, cpNine)
-    
-    % dur p4
-    disp('fixation duration p4')
-    [h, p, ci, stats] = ttest2(onesec.dur4, ninesec.dur4)
-    
-    % dur p2
-    disp('fixation duration p2')
-    [h, p, ci, stats] = ttest2(onesec.dur2, ninesec.dur2)
-    
-    % optimization
-    disp('optimization')
-    [h, p, ci, stats] = ttest2(onesec.Optimization, ninesec.Optimization)
-    
-    % response time first bin
-    disp('response time: bin 1')
-    rtOne = onesec.rt2(onesec.TrialBin == 1);
-    rtNine = ninesec.rt2(ninesec.TrialBin == 1);
-    
-    [h, p, ci, stats] = ttest2(rtOne, rtNine)
-    
-    
-    
+        disp('now BY CONDITION...these are independent samples')
 
+        ninesec = sumTable(sumTable.Condition == 9000, :);
+        onesec = sumTable(sumTable.Condition == 1000, :);
 
-%% p4 duration FOR non-fixed
-    if ~fixed
+        
+        % divide subject CPs for one sec, nine sec conditions
+        cpNine = [];
+        subjects = unique(ninesec.Subject); % identify subjects in the 9 sec condition
+
+        % need these loops to ensure we only get one value per subject, as
+        % sumTable has more than one row per subject
+        for i = 1:length(subjects)
+           filtered = ninesec.CP(ninesec.Subject == subjects(i));
+           cpNine = [cpNine; filtered(1)];
+        end
+
+        cpOne = [];
+        subjects = unique(onesec.Subject);
+        for i = 1:length(subjects)
+           filtered = onesec.CP(onesec.Subject == subjects(i));
+           cpOne = [cpOne; filtered(1)];
+        end
+
+        %% run t-tests for all measures, including CP. comparing 9 sec
+        %% condition to 1 sec condition (independent samples t-tests)
+        disp('cp')
+        [h, p, ci, stats] = ttest2(cpOne, cpNine)
+
+        % dur p4
+        disp('fixation duration p4')
+        [h, p, ci, stats] = ttest2(onesec.dur4, ninesec.dur4)
+
+        % dur p2
+        disp('fixation duration p2')
+        [h, p, ci, stats] = ttest2(onesec.dur2, ninesec.dur2)
+
+        % optimization
+        disp('optimization')
+        [h, p, ci, stats] = ttest2(onesec.Optimization, ninesec.Optimization)
+
+        
+        % response time first bin. comparing response time early on in the
+        % experiment across conditions. just for interest's sake.
+        disp('response time: bin 1')
+        rtOne = onesec.rt2(onesec.TrialBin == 1);
+        rtNine = ninesec.rt2(ninesec.TrialBin == 1);
+
+        [h, p, ci, stats] = ttest2(rtOne, rtNine)
+    
+   
+
+    else
+    %% for self-paced experiments, feedback phase duration is also a basic measure
+        % same format as all above measures
+        
         g = gramm('x', binned.TrialBin, 'y', binned.mean_rt4);
 
         g.stat_summary();   
