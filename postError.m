@@ -1,4 +1,3 @@
-%% fix this to accommodate self=paced v fixed-time
 
 function [first, second, third] = postError(experiment, subTable, phase, cps, fixed)
 
