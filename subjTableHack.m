@@ -217,7 +217,7 @@ switch measure
     case 'fc2' 
         % same as above, but count using length() instead of nanmean()
         % to get number of fixations to features during p2 of each trial
-        % fc2 will be a vector of all these fixations
+        % fc2 will be the number of these fixations
 
         % Gnarly: FixationCountExtractor, phase 2, 'allinone'
         
