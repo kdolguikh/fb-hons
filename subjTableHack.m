@@ -92,7 +92,7 @@
 function data = subjTableHack(experiment, measure)
 
     % this is where the data is stored on kat's computer
-    direc = strcat('Users/16132/Documents/lab/KAT/', experiment);
+    direc = strcat('C:/Users/16132/Documents/lab/KAT/', experiment);
 
     load(strcat(direc, '/explvl.mat'));
     load(strcat(direc, '/triallvl.mat'));
