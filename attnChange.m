@@ -129,46 +129,55 @@ function [hr, pr, cir, statsr] = attnChange(experiment, subTable, targetTrial, b
 
         optDiff = abs(p2Subject - p4Subject);       
         
+        
+        subAccuracy = subTable.Accuracy(subTable.Subject == current);
+        subAccuracy(end+1:expMax) = NaN;
 
         %% uncomment this next part for individual plots of attention change (eg. fig. 10 in paper). 
        
         % create a scatter plot for each subject (what we are looking for are the points at 0)
         
-%         % for the plot, we don't want absolute value
-%         rawDiff = p2Subject - p4Subject;
+        % for the plot, we don't want absolute value
+        rawDiff = p2Subject - p4Subject;
+
+        c = subAccuracy;
+
         
-%         figure()
-%         scatter(1:length(p2Subject), optDiff);
-%         ylim([-2 2])
-%         hold on
-%         y = ylim;
-%         plot([cp cp],[y(1) y(2)])
-% 
-% 
-%         fnPlot = strcat('\Users\16132\Documents\lab\KAT\optChange\', experiment, '\', num2str(current));
-% 
-%         saveas(gca, char(strcat(fnPlot, '.png')));
-% 
-%         close all
-
-
-
-        % at the end of this loop, gazeChange will be a #subjects * expMax
-        % array of optChange values for each subject on each trial 
-
-        gazeChange = [gazeChange, optDiff];
+        figure()
+        caxis([0.2 0.8]);
+        colormap jet
         
-        % for fb2 and fb3, get into each condition specifically
-        if fixed
-            cond = subTable.Condition(subTable.Subject == current);
-            if cond(1) == 1000  % one sec people
-               gazeOne = [gazeOne, optDiff];
-               targetOne = [targetOne; targetTrial(i)];
-            else    % nine sec people
-               gazeNine = [gazeNine, optDiff];
-               targetNine = [targetNine; targetTrial(i)];
-            end
-        end
+        scatter(1:length(p2Subject), rawDiff, [], c);
+        ylim([-2 2])
+        hold on
+        y = ylim;
+        plot([cp cp],[y(1) y(2)])
+
+
+        fnPlot = strcat('\Users\16132\Documents\lab\KAT\', experiment, '\attnChange\', num2str(current));
+
+        saveas(gca, char(strcat(fnPlot, '.png')));
+
+        close all
+
+
+
+%         % at the end of this loop, gazeChange will be a #subjects * expMax
+%         % array of optChange values for each subject on each trial 
+% 
+%         gazeChange = [gazeChange, optDiff];
+%         
+%         % for fb2 and fb3, get into each condition specifically
+%         if fixed
+%             cond = subTable.Condition(subTable.Subject == current);
+%             if cond(1) == 1000  % one sec people
+%                gazeOne = [gazeOne, optDiff];
+%                targetOne = [targetOne; targetTrial(i)];
+%             else    % nine sec people
+%                gazeNine = [gazeNine, optDiff];
+%                targetNine = [targetNine; targetTrial(i)];
+%             end
+%         end
 
     end
     

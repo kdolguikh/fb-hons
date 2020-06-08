@@ -72,8 +72,10 @@ experiments = ["asset", "sshrcif", "sato", "feedback2", "feedback3"];
 % script, replace with locations of gramm (link above) and
 % InProgress/Experiments/FeedbackDuration/Analyses on your computer.
 % InProgress folder will be unnecessary once we can go back to Gnarly/SQL.
-addpath('/Users/16132/Documents/lab/gramm-master');     % for pretty plots :)
-addpath('/Users/16132/Documents/lab/InProgress-master/Experiments/FeedbackDuration/Analyses');      % this is the location of subjTableHack
+addpath('C://Users/16132/Documents/lab/gramm-master');     % for pretty plots :)
+
+
+%addpath('/Users/16132/Documents/lab/InProgress-master/Experiments/FeedbackDuration/Analyses');      % this is the location of subjTableHack
 
 
 
@@ -81,7 +83,7 @@ addpath('/Users/16132/Documents/lab/InProgress-master/Experiments/FeedbackDurati
 for i = experiments
     
     % load data:
-    dir = strcat('Users/16132/Documents/lab/KAT/', i);  %again, location on kat's laptop. 
+    dir = strcat('C:/Users/16132/Documents/lab/KAT/', i);  %again, location on kat's laptop. 
 
     % kat has this data. if you need it to verify, ask her.
     load(strcat(dir, '/explvl.mat'));
