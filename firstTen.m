@@ -20,8 +20,8 @@ function [learner, nonlearner] = firstTen(experiment)
     
     %% toggle back and forth for 1 sec or 9 sec people in feedback 2/3, or use third one for other experiments (sorry, lazy)
     %subjects = explvl.Subject(explvl.FeedbackDuration == 1000);
-    subjects = explvl.Subject(explvl.FeedbackDuration == 9000);
-    %subjects = explvl.Subject
+    %subjects = explvl.Subject(explvl.FeedbackDuration == 9000);
+    subjects = explvl.Subject
     
     learnerCorrect = [];
     learnerIncorrect = [];
@@ -89,5 +89,13 @@ function [learner, nonlearner] = firstTen(experiment)
     
     xticklabels({'correct trials', 'incorrect trials'})
     legend({'learners', 'non-learners'}, 'location', 'northwest')
+    
+    
+    % two t-tests: comparing learners to nonlearners on correct trials, and
+    % comparing learners to nonlearners on inccorect trials
+    % (purposely not suppressing output on both of these so we don't have
+    % to return a million values and can just display them instead)
+    [h, p, ci, stats] = ttest2(learnerCorrect, nlCorrect)
+    [h2, p2, ci2, stats2] = ttest2(learnerIncorrect, nlIncorrect)
 
 end
