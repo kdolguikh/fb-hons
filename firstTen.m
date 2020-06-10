@@ -44,10 +44,20 @@ function [learner, nonlearner] = firstTen(experiment)
     correct = [nanmean(learnerCorrect), nanmean(nlCorrect)];
     incorrect = [nanmean(learnerIncorrect), nanmean(nlIncorrect)];
     
-    info = [correct; incorrect];
+    correctsem = [nanstd(learnerCorrect)/sqrt(length(learnerCorrect)), nanstd(nlCorrect)/sqrt(length(nlCorrect))];
+    incorrectsem = [nanstd(learnerIncorrect)/sqrt(length(learnerIncorrect)), nanstd(nlIncorrect)/sqrt(length(nlIncorrect))];
     
-    bar(info)
+    
+    info = [correct; incorrect];
+    error = [correctsem; incorrectsem];
+    
+    hBar = bar(info)
+    xBar=cell2mat(get(hBar,'XData')).' + [hBar.XOffset];  % compute bar centers
+    hold on
+    
+    errorbar(xBar, info, error, '.k');
+    
     xticklabels({'correct trials', 'incorrect trials'})
-    legend({'learners', 'non-learners'})
+    legend({'learners', 'non-learners'}, 'location', 'northwest')
 
 end
