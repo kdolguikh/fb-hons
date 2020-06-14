@@ -9,7 +9,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     %  Cognitive Science Lab, Simon Fraser University 
     %  Originally Created For: feedback
       
-    %  Reviewed: 
+    %  Reviewed: Cal cwoodruf@sfu.ca
     %  Verified: 
 
     
@@ -60,11 +60,14 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
     
     
     % calculate statistics by bin
+    % cal: Having a description of what these are might be a good idea here. The titles below with some elaboration?
     binned = grpstats(sumTable, {'Subject', 'Condition', 'TrialBin'}, {'mean', 'predci'}, 'datavars', {'Accuracy', 'rt2', 'dur2', 'fc2', 'irrelp2', 'rt4', 'dur4', 'fc4', 'irrelp4', 'Optimization', 'p4features', 'p4button'});
     subjects = unique(binned.Subject);
     
     
 %% plots using gramm
+% cal: You could reduce the length by creating a function for building each graph?
+%      This can make documenting things easier too.
 % accuracy/learning curve
     g = gramm('x', binned.TrialBin, 'y', binned.mean_Accuracy, 'color', binned.Condition);
     
@@ -276,6 +279,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
         % sumTable has more than one row per subject
         for i = 1:length(subjects)
            filtered = ninesec.CP(ninesec.Subject == subjects(i));
+           % cal: wasn't clear on why 1 is the right one to pick?
            cpNine = [cpNine; filtered(1)];
         end
 
@@ -283,6 +287,7 @@ function binned = basics(experiment, fixed, sumTable, targetTrial, limits)
         subjects = unique(onesec.Subject);
         for i = 1:length(subjects)
            filtered = onesec.CP(onesec.Subject == subjects(i));
+           % cal: ditto 
            cpOne = [cpOne; filtered(1)];
         end
 
