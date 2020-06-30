@@ -12,6 +12,7 @@
 % error in the correlation function. Works fine on sshrcif however.
 % I've put some code that'll output those values onto the console for
 % debugging.
+%% FIXED - kat
 
 function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
 
@@ -25,7 +26,7 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
     triallvl.timeOnFeaturesp4 = timeOnFeatures(:, 2);
     
     % eliminate random responders
-    explvl(explvl.Random == 1, :) = [];
+    explvl(explvl.random == 1, :) = [];
     
     %% Handling for 1 sec or 9 sec people in feedback 2/3
     if strcmp(experiment, "Feedback2") || strcmp(experiment, "Feedback3")
@@ -34,10 +35,15 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
             return;
         end
 
+        
+   % moved errorCount into this if/else to ensure we only get data for the
+   % subjects we want - Kat, june 30 2020
         if feedbackDuration == 1000
             subjects = explvl.Subject(explvl.FeedbackDuration == 1000);
+            errors = explvl.errorCount(explvl.FeedbackDuration == 1000);
         elseif feedbackDuration == 9000
             subjects = explvl.Subject(explvl.FeedbackDuration == 9000);
+            errors = explvl.errorCount(explvl.FeedbackDuration == 9000);
         else
             error('Inputted feedback duration not implemented in this function.');
             return;
@@ -45,9 +51,10 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
         
     else % Experiment is not Feedback2/3
         subjects = explvl.Subject;
+        errors = explvl.errorCount;
     end
     
-    errors = explvl.errorCount;
+    
     
     % we only want the first 50 trials
     triallvl(triallvl.TrialID > 50, :) = [];
