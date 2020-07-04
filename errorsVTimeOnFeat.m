@@ -1,21 +1,17 @@
 %% # errors and time on features during fb
 
-% correlation bw total errors (experiment) and time on features during
-% feedback on first 50 trials 
+% correlation between total errors (experiment) and time on features during
+% feedback on first 50 trials
 
-% Reviewed: 
+% - Notes -
+% Experiment name is the main argument, with feedbackDuration being an
+% optional argument for experiments with this manipulation. Currently, this
+% only applies to Feedback 2 and 3.
+
+% Reviewed: Tyrus Tracey [July 4th, 2020] 
 % Verified:
 
-% Reviewer Notes:
-% I've added feedback duration as an optional argument to handle our use cases.
-% FB2/3 produce unequal amounts of errors to feedbacks which causes an
-% error in the correlation function. Works fine on sshrcif however.
-% I've put some code that'll output those values onto the console for
-% debugging.
-%% FIXED - kat
-
 function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
-
     directory = 'C:/Users/16132/Documents/lab/feedback/KAT/';
     addpath('C:/Users/16132/Documents/lab/feedback/fb-hons');  % for subjTableHack
     load(strcat(directory, '/', experiment, '/triallvl.mat'));
@@ -34,10 +30,6 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
             error('Feedback duration(ms) is a required argument for this experiment.');
             return;
         end
-
-        
-   % moved errorCount into this if/else to ensure we only get data for the
-   % subjects we want - Kat, june 30 2020
         if feedbackDuration == 1000
             subjects = explvl.Subject(explvl.FeedbackDuration == 1000);
             errors = explvl.errorCount(explvl.FeedbackDuration == 1000);
@@ -54,8 +46,6 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
         errors = explvl.errorCount;
     end
     
-    
-    
     % we only want the first 50 trials
     triallvl(triallvl.TrialID > 50, :) = [];
     feedback = [];
@@ -65,30 +55,11 @@ function [r, p] = errorsVTimeOnFeat(experiment, feedbackDuration)
         feedback = [feedback; nanmean(fb)];
     end
     
-    
-    numErrors = length(errors);
-    numFeedbk = length(feedback);
-    if numErrors ~= numFeedbk
-        dispE = ['Errors Length: ', num2str(length(errors))];
-        dispF = ['Feedback Length: ', num2str(length(feedback))];
-        disp('--Before Removal--');
-        disp(dispE);
-        disp(dispF);
-    end
-    
     % check for & delete any NaN values in feedback (the corr function
     % seems to not be able to handle NaNs)
     toRemove = isnan(feedback);
     feedback(toRemove) = [];
     errors(toRemove) = [];
-    
-   if numErrors ~= numFeedbk
-        dispE = ['Errors Length: ', num2str(length(errors))];
-        dispF = ['Feedback Length: ', num2str(length(feedback))];
-        disp('--After Removal--');
-        disp(dispE);
-        disp(dispF);
-   end
     
     [r, p] = corr(errors, feedback);
     scatter(errors, feedback);
